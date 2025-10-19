@@ -1,0 +1,12 @@
+[programs.devnet]
+ruhmdefi = "RuhmDeFiProgram1111111111111111111111111111"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "Devnet"
+wallet = "~\\.config\\solana\\id.json"
+
+[scripts]
+test = "node tests/run.js"

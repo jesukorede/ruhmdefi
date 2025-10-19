@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AISuggestion {
+  id               String  @id @default(uuid())
+  trade_id         String  @unique
+  token_pair       String
+  strategy_summary String
+  confidence_score Float
+  expected_apy     Float
+  routes           Json
+  created_at       DateTime @default(now())
+}
+
+model Decision {
+  id            String  @id @default(uuid())
+  trade_id      String
+  user_pubkey   String
+  selected_route Json
+  onchain_tx    String?
+  confirmed     Boolean @default(false)
+  created_at    DateTime @default(now())
+}
