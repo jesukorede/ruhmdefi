@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider wallets={wallets} autoConnect>
             <WalletModalProvider>
-              <div className="min-h-screen flex bg-gray-50">
+              <div className="min-h-screen flex bg-[var(--background)] text-[var(--foreground)]">
                 <Sidebar />
                 <div className="flex-1">
                   <Navbar />

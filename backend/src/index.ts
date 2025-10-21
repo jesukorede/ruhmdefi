@@ -2,15 +2,35 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { getEnv } from './utils/env';
 import arbitrageRoutes from './routes/arbitrage';
+import yieldRoutes from './routes/yield';
+import portfolioRoutes from './routes/portfolio';
+import decisionRoutes from './routes/decision';
+import simulateRoutes from './routes/simulate';
+import eventsRoutes from './routes/events';
 
 const env = getEnv();
 const server = Fastify({ logger: true });
 
-server.register(cors, { origin: true });
+server.register(cors, {
+  origin: (origin, cb) => {
+    const allowed = [
+      'http://localhost:3000',
+      'https://<your-vercel-app>.vercel.app',
+      'https://<your-backend>.onrender.com',
+    ];
+    if (!origin || allowed.includes(origin)) cb(null, true);
+    else cb(new Error('Not allowed'), false);
+  },
+});
 
 server.get('/health', async () => ({ ok: true }));
 
+server.register(eventsRoutes, { prefix: '/' });
 server.register(arbitrageRoutes, { prefix: '/' });
+server.register(yieldRoutes, { prefix: '/' });
+server.register(portfolioRoutes, { prefix: '/' });
+server.register(decisionRoutes, { prefix: '/' });
+server.register(simulateRoutes, { prefix: '/' });
 
 const start = async () => {
   try {
@@ -21,5 +41,4 @@ const start = async () => {
     process.exit(1);
   }
 };
-
 start();
