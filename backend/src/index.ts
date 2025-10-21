@@ -13,12 +13,18 @@ const server = Fastify({ logger: true });
 
 server.register(cors, {
   origin: (origin, cb) => {
-    const allowed = [
+    const allowedExact = [
       'http://localhost:3000',
       'https://ruhmdefi-lbap.vercel.app',
       'https://ruhmdefi.onrender.com',
     ];
-    if (!origin || allowed.includes(origin)) cb(null, true);
+    const allowedSuffixes = ['.vercel.app', '.netlify.app'];
+    const normalized = origin ? origin.replace(/\/$/, '') : origin;
+    const ok =
+      !origin ||
+      (normalized && allowedExact.includes(normalized)) ||
+      (normalized && allowedSuffixes.some((suf) => normalized.endsWith(suf)));
+    if (ok) cb(null, true);
     else cb(new Error('Not allowed'), false);
   },
 });
