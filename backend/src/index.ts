@@ -15,8 +15,8 @@ server.register(cors, {
   origin: (origin, cb) => {
     const allowed = [
       'http://localhost:3000',
-      'https://<your-vercel-app>.vercel.app',
-      'https://<your-backend>.onrender.com',
+      'https://ruhmdefi-lbap.vercel.app',
+      'https://ruhmdefi.onrender.com',
     ];
     if (!origin || allowed.includes(origin)) cb(null, true);
     else cb(new Error('Not allowed'), false);
