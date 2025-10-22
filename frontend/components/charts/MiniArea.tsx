@@ -14,7 +14,9 @@ import { Line } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-export default memo(function MiniArea({ values = [] as number[], accent = "#00ffc2" }) {
+type MiniAreaProps = { values: number[]; accent?: string };
+
+export default memo(function MiniArea({ values = [], accent = "#00ffc2" }: MiniAreaProps) {
   const labels = useMemo(() => values.map((_, i) => `${i}`), [values]);
   const data = useMemo(
     () => ({
