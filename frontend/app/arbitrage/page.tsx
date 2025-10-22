@@ -7,7 +7,7 @@ import Toast, { ToastMsg } from '../../components/Toast';
 import JsonModal from '../../components/JsonModal';
 
 export default function ArbitragePage() {
-  const { loading, error, suggestions, runScan } = useAgentverse();
+  const { loading, error, suggestions, runScan, connected } = useAgentverse();
   const [plans, setPlans] = useState<Record<string, any>>({});
   const [simResults, setSimResults] = useState<Record<string, any>>({});
   const [amounts, setAmounts] = useState<Record<string, number>>({});
@@ -297,12 +297,17 @@ export default function ArbitragePage() {
       <Toast messages={toasts} onDismiss={dismissToast} />
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Arbitrage</h2>
-        <button
-          onClick={() => runScan('arbitrage')}
-          className="rounded bg-[#119611] text-white px-4 py-2 hover:brightness-110"
-        >
-          Scan Arbitrage
-        </button>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs px-2 py-1 rounded ${connected ? 'bg-green-600/20 text-green-300 border border-green-600/40' : 'bg-red-600/20 text-red-300 border border-red-600/40'}`}>
+            {connected ? 'Scanning active' : 'Realtime connection interrupted'}
+          </span>
+          <button
+            onClick={() => runScan('arbitrage')}
+            className="rounded bg-[#119611] text-white px-4 py-2 hover:brightness-110"
+          >
+            Scan Arbitrage
+          </button>
+        </div>
       </div>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 md:gap-3 text-sm text-[var(--muted)]">

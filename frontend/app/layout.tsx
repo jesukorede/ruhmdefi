@@ -1,35 +1,55 @@
 'use client';
 import './globals.css';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { clusterApiUrl } from '@solana/web3.js';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+// Updated: remove BackpackWalletAdapter and GlowWalletAdapter
+import { PhantomWalletAdapter, SolflareWalletAdapter, TorusWalletAdapter } from '@solana/wallet-adapter-wallets';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import { useEffect, useState } from 'react';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const endpoint = process.env.NEXT_PUBLIC_RPC_ENDPOINT || clusterApiUrl('devnet');
-  const wallets = [new PhantomWalletAdapter()];
+    const network = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as any) || 'devnet';
+    const endpoint = process.env.NEXT_PUBLIC_RPC_ENDPOINT || clusterApiUrl(network as any);
 
-  return (
-    <html lang="en">
-      <body>
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>
-              <div className="min-h-screen flex bg-[var(--background)] text-[var(--foreground)]">
-                <Sidebar />
-                <div className="flex-1">
-                  <Navbar />
-                  <main className="p-6">{children}</main>
+    const wallets = useMemo(
+      () => [
+        new PhantomWalletAdapter(),
+        new SolflareWalletAdapter({ network }),
+        new TorusWalletAdapter(),
+      ],
+      [network]
+    );
+
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('theme') as 'light' | 'dark') || 'dark' : 'dark'));
+
+    useEffect(() => {
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      }
+    }, [theme]);
+
+    return (
+      <html lang="en" data-theme={theme}>
+        <body>
+          <ConnectionProvider endpoint={endpoint}>
+            <WalletProvider wallets={wallets} autoConnect>
+              <WalletModalProvider>
+                <div className="min-h-screen flex bg-[var(--background)] text-[var(--foreground)]">
+                  <Sidebar />
+                  <div className="flex-1">
+                    <Navbar theme={theme} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
+                    <main className="p-6">{children}</main>
+                  </div>
                 </div>
-              </div>
-            </WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
-      </body>
-    </html>
-  );
+              </WalletModalProvider>
+            </WalletProvider>
+          </ConnectionProvider>
+        </body>
+      </html>
+    );
 }

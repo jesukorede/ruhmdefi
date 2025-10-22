@@ -1,8 +1,11 @@
 import { API_BASE } from '../../lib/api';
 
 export default async function RiskPage() {
-  const res = await fetch(`${API_BASE}/yield`, { cache: 'no-store' });
-  const data = await res.json();
+  let data: any = null;
+  try {
+    const res = await fetch(`${API_BASE}/yield`, { cache: 'no-store' });
+    data = res.ok ? await res.json() : null;
+  } catch {}
   const suggestions = data?.suggestions || [];
 
   const score = (apy: number, conf: number) => {

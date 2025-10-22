@@ -1,15 +1,21 @@
 import { API_BASE } from '../../lib/api';
 
 export default async function YieldPage() {
-  const res = await fetch(`${API_BASE}/yield`, { cache: 'no-store' });
-  const data = await res.json();
+  let data: any = null;
+  try {
+    const res = await fetch(`${API_BASE}/yield`, { cache: 'no-store' });
+    data = res.ok ? await res.json() : null;
+  } catch {}
   const suggestions = data?.suggestions || [];
+  const ts = Number(data?.timestamp ?? Date.now());
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Yield Opportunities</h2>
-        <span className="text-xs text-gray-500">{new Date(data?.timestamp || Date.now()).toLocaleString()}</span>
+        <span className="text-xs text-gray-500" suppressHydrationWarning>
+          {new Date(ts).toISOString()}
+        </span>
       </div>
       <ul className="space-y-2">
         {suggestions.map((s: any) => (

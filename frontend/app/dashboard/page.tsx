@@ -1,8 +1,7 @@
 'use client';
 
-import LandingPage from './landing/page';
-import { useAgentverse } from '../hooks/useAgentverse';
-import Card from '../components/Card';
+import { useAgentverse } from '../../hooks/useAgentverse';
+import Card from '../../components/Card';
 
 function DashboardPage() {
   const { loading, error, suggestions, runScan } = useAgentverse();
@@ -34,5 +33,4 @@ function DashboardPage() {
     </div>
   );
 }
-export default LandingPage;
-
+export default DashboardPage

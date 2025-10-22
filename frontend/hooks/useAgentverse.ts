@@ -16,6 +16,7 @@ export function useAgentverse() {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     const es = new EventSource(`${API_BASE}/events`);
@@ -26,8 +27,8 @@ export function useAgentverse() {
       } catch {}
     };
     es.addEventListener('arbitrage', onArbitrage);
-    es.onopen = () => setError(null);
-    es.onerror = () => setError('Realtime connection interrupted');
+    es.onopen = () => { setConnected(true); setError(null); };
+    es.onerror = () => { setConnected(false); setError('Realtime connection interrupted'); };
     return () => {
       es.removeEventListener('arbitrage', onArbitrage as any);
       es.close();
@@ -51,5 +52,5 @@ export function useAgentverse() {
     []
   );
 
-  return { loading, suggestions, error, runScan };
+  return { loading, suggestions, error, runScan, connected };
 }

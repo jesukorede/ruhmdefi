@@ -4,14 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
-/* RuhmDeFi Dark Theme variables already set */
 :root {
+  --foreground: #0c0c0c;
+  --background: #f7f8f9;
+  --accent: #00ffc2;
+  --accent-foreground: #001a14;
+  --muted: #6b7280;
+  --surface: #ffffff;
+  --surface-2: #f2f3f5;
+  --border: #e5e7eb;
+  --ring: #00ffc2;
+  --radius: 12px;
+}
+
+[data-theme="dark"] {
   --foreground: #e6e6e6;
-  --background: #141414;
-  --accent: #119611;
+  --background: #0b0c0e;
+  --accent: #00ffc2;
+  --accent-foreground: #001a14;
   --muted: #9ca3af;
-  --surface: #1a1a1a;
-  --border: #2a2a2a;
+  --surface: #121317;
+  --surface-2: #16181d;
+  --border: #24272e;
+  --ring: #00ffc2;
+  --radius: 12px;
 }
 
 html, body {
@@ -26,7 +42,6 @@ html, body {
   --font-mono: var(--font-geist-mono);
 }
 
-/* Force dark theme, no auto swap */
 body {
   background: var(--background);
   color: var(--foreground);
@@ -51,3 +66,23 @@ body {
   color: var(--foreground) !important;
   border: 1px solid var(--border) !important;
 }
+
+.card {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: calc(var(--radius) - 6px);
+  padding: 0.5rem 0.75rem;
+  transition: all 200ms ease;
+}
+.btn-primary { background: var(--accent); color: #001a14; }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-ghost { border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface-2); }
