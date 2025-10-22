@@ -10,6 +10,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useEffect, useState } from 'react';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
     const network = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as any) || 'devnet';
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </WalletModalProvider>
             </WalletProvider>
           </ConnectionProvider>
+          <SpeedInsights />
         </body>
       </html>
     );

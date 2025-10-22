@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify from "fastify";
 import cors from '@fastify/cors';
 import { getEnv } from './utils/env';
 import arbitrageRoutes from './routes/arbitrage';
@@ -12,13 +12,15 @@ const env = getEnv();
 const server = Fastify({ logger: true });
 
 server.register(cors, {
+  // keep your existing CORS config; ensure Fly/Vercel allowed
   origin: (origin, cb) => {
     const allowedExact = [
       'http://localhost:3000',
       'https://ruhmdefi-lbap.vercel.app',
       'https://ruhmdefi.onrender.com',
+      'https://ruhmdefi-backend.fly.dev',
     ];
-    const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app'];
+    const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app', '.fly.dev'];
     const normalized = origin ? origin.replace(/\/$/, '') : origin;
     const ok =
       !origin ||
@@ -32,22 +34,22 @@ server.register(cors, {
   },
 });
 
-server.get('/health', async () => ({ ok: true }));
+server.get("/health", async () => ({ ok: true }));
 
-server.register(eventsRoutes, { prefix: '/' });
-server.register(arbitrageRoutes, { prefix: '/' });
-server.register(yieldRoutes, { prefix: '/' });
-server.register(portfolioRoutes, { prefix: '/' });
-server.register(decisionRoutes, { prefix: '/' });
-server.register(simulateRoutes, { prefix: '/' });
+server.register(eventsRoutes, { prefix: "/" });
+server.register(arbitrageRoutes, { prefix: "/" });
+server.register(yieldRoutes, { prefix: "/" });
+server.register(portfolioRoutes, { prefix: "/" });
+server.register(decisionRoutes, { prefix: "/" });
+server.register(simulateRoutes, { prefix: "/" });
 
-const start = async () => {
+(async () => {
   try {
-    await server.listen({ port: env.PORT, host: '0.0.0.0' });
-    server.log.info(`API listening on :${env.PORT}`);
+    const port = Number(process.env.PORT) || 8080;
+    await server.listen({ port, host: "0.0.0.0" });
+    server.log.info(`API listening on :${port}`);
   } catch (err) {
-    server.log.error(err);
+    server.log.error(err as Error);
     process.exit(1);
   }
-};
-start();
+})();

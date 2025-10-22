@@ -10,7 +10,9 @@ export async function getTopPools(limit = 10): Promise<Pool[]> {
   try {
     const res = await fetch('https://yields.llama.fi/pools');
     const json = await res.json();
-    const pools = (json?.data || []) as Pool[];
+    // Wherever 'json' is produced (e.g., from fetch/parse), it's currently 'unknown'.
+    // Fix property access by typing/casting the response shape:
+    const pools = ((json as ApiResponse<Pool[]>)?.data) ?? [];
     return pools
       .filter((p) => p.chain?.toLowerCase() === 'solana' && Number.isFinite(p.apy))
       .sort((a, b) => (b.apy || 0) - (a.apy || 0))
@@ -29,9 +31,11 @@ export async function getJupiterPrices(ids: string[]) {
   try {
     const res = await fetch(url);
     const json = await res.json();
-    return json?.data || {};
+    return ((json as ApiResponse<Record<string, unknown>>)?.data) ?? {};
   } catch {
     // Fallback when DNS/network fails
     return {};
   }
 }
+
+type ApiResponse<T> = { data: T };

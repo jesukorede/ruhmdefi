@@ -1,0 +1,38 @@
+app = "ruhmdefi-backend"        # set a unique app name
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = false
+
+  [[http_service.checks]]
+    type = "http"
+    path = "/health"
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "30s"
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 25
+
+  [[http_service.checks]]
+    type = "http"
+    interval = "15s"
+    timeout = "2s"
+    path = "/health"
+
+[[vm]]
+  memory = "512MB"
+  cpu_kind = "shared"
+  cpus = 1
