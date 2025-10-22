@@ -2,6 +2,69 @@
 # ===== Helper: Connect to Backend (Fastify API) =====
 import os
 import requests
+from datetime import datetime
+from uuid import uuid4
+from uagents import Agent, Context, Protocol
+from uagents_core.contrib.protocols.chat import (
+    ChatAcknowledgement,
+    ChatMessage,
+    EndSessionContent,
+    StartSessionContent,
+    TextContent,
+    chat_protocol_spec,
+)
+
+# ===== Optional: MeTTa Integration =====
+try:
+    # metta-python package provides runtime for MeTTa
+    from hyperon import MeTTa
+    METTA_AVAILABLE = True
+except Exception:
+    METTA_AVAILABLE = False
+
+METTA_KNOWLEDGE = """
+# Pairs, pools, and simple risk rules
+(token SOL)
+(token USDC)
+(token BONK)
+
+(pool raydium SOL/USDC liquidity-high apy-0.05)
+(pool orca SOL/USDC liquidity-medium apy-0.04)
+(pool raydium BONK/USDC liquidity-low apy-0.20)
+
+# If liquidity-low and apy > 0.15 then risk-high
+(:- (risk-high $pair)
+    (pool $proto $pair liquidity-low $apy)
+    (> $apy 0.15))
+
+# If liquidity-high and apy < 0.10 then risk-low
+(:- (risk-low $pair)
+    (pool $proto $pair liquidity-high $apy)
+    (< $apy 0.10))
+
+# Fallback medium
+(:- (risk-medium $pair)
+    (token-pair $pair))
+"""
+
+def assess_with_metta(token_pair: str) -> dict:
+    if not METTA_AVAILABLE:
+        return {"metta": False, "risk": "unknown"}
+    try:
+        m = MeTTa()
+        m.run(METTA_KNOWLEDGE)
+        # Ensure token pair atom is present
+        m.run(f"(= (token-pair {token_pair.replace('/', '')}) true)")
+        # Query risk predicates in order
+        high = m.run(f"(risk-high {token_pair})")
+        low = m.run(f"(risk-low {token_pair})")
+        if str(high).strip() != "()":
+            return {"metta": True, "risk": "high"}
+        if str(low).strip() != "()":
+            return {"metta": True, "risk": "low"}
+        return {"metta": True, "risk": "medium"}
+    except Exception as e:
+        return {"metta": False, "error": str(e), "risk": "unknown"}
 
 def fetch_backend_data(endpoint: str):
     BASE_URL = os.getenv("AGENT_BACKEND_URL", "http://localhost:4000")
@@ -24,34 +87,77 @@ def get_defi_opportunities():
         return {"error": str(e)}
 
 agent = Agent(
-    name="RuhmDeFi",
-    port=8000,
-    seed="RuhmDeFiSolanaAgentSeed",
-    endpoint="https://agentverse.ai/agent/ruhmdefi",
-    protocol=chat_protocol_spec,
+    name=os.getenv("AGENT_NAME", "RuhmDeFi"),
+    port=int(os.getenv("AGENT_PORT", "8000")),
+    seed=os.getenv("AGENT_SEED", "RuhmDeFiSolanaAgentSeed"),
 )
 
-@agent.on_message(model=ChatMessage, replies=ChatAcknowledgement)
-async def handle_chat(ctx: Context, sender: str, msg: ChatMessage):
-    user_text = (msg.content[0].text or "").lower()
-    ctx.logger.info(f"🧠 Received message: {user_text}")
+chat_proto = Protocol(spec=chat_protocol_spec)
 
-    if "yield" in user_text:
-        data = get_defi_opportunities()
-        ctx.send(sender, create_text_chat(f"📊 Yield data fetched: {data}"))
-        memory.add({"type": "yield", "data": data})
+def create_text_chat(text: str, end_session: bool = False) -> ChatMessage:
+    content = [TextContent(type="text", text=text)]
+    return ChatMessage(
+        timestamp=datetime.utcnow(),
+        msg_id=uuid4(),
+        content=content,
+    )
 
-    elif "arbitrage" in user_text:
-        ctx.send(sender, create_text_chat("🔍 Scanning for arbitrage..."))
-        arb_data = fetch_backend_data("arbitrage")
-        ctx.send(sender, create_text_chat(f"💰 Arbitrage update: {arb_data}"))
-        memory.add({"type": "arbitrage", "data": arb_data})
+recent = []
 
-    elif "summary" in user_text:
-        ctx.send(sender, create_text_chat(f"🧾 Recent actions: {memory.history[-3:]}"))
+@chat_proto.on_message(ChatMessage)
+async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
+    try:
+        await ctx.send(sender, ChatAcknowledgement(timestamp=datetime.utcnow(), acknowledged_msg_id=msg.msg_id))
+    except Exception:
+        pass
+    for item in msg.content:
+        if isinstance(item, StartSessionContent):
+            continue
+        elif isinstance(item, TextContent):
+            text = (item.text or "").lower()
+            if "yield" in text:
+                data = get_defi_opportunities()
+                recent.append({"t": "yield", "d": data})
+                await ctx.send(sender, create_text_chat(f"Yield data: {data}"))
+            elif "arbitrage" in text:
+                await ctx.send(sender, create_text_chat("Scanning for arbitrage..."))
+                arb = fetch_backend_data("arbitrage")
+                # Assess first suggestion with MeTTa if present
+                try:
+                    if isinstance(arb, dict) and "suggestions" in arb and arb["suggestions"]:
+                        pair = arb["suggestions"][0].get("token_pair", "SOL/USDC")
+                        risk = assess_with_metta(pair)
+                        arb["metta_risk"] = risk
+                except Exception:
+                    pass
+                recent.append({"t": "arbitrage", "d": arb})
+                await ctx.send(sender, create_text_chat(f"Arbitrage: {arb}"))
+            elif "decision" in text:
+                dec = fetch_backend_data("decision")
+                try:
+                    if isinstance(dec, dict) and "plan" in dec:
+                        pair = dec["plan"].get("token_pair", "SOL/USDC")
+                        dec["plan"]["metta_risk"] = assess_with_metta(pair)
+                except Exception:
+                    pass
+                recent.append({"t": "decision", "d": dec})
+                await ctx.send(sender, create_text_chat(f"Decision: {dec}"))
+            elif "summary" in text:
+                await ctx.send(sender, create_text_chat(f"Recent: {recent[-3:]}"))
+            elif "end" in text:
+                await ctx.send(sender, create_text_chat("Session ended.", end_session=True))
+            else:
+                await ctx.send(sender, create_text_chat("Say 'yield', 'arbitrage', 'decision', or 'summary'."))
+        elif isinstance(item, EndSessionContent):
+            continue
+        else:
+            continue
 
-    elif "end" in user_text:
-        ctx.send(sender, create_text_chat("👋 Ending session.", end_session=True))
+@chat_proto.on_message(ChatAcknowledgement)
+async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
+    return
 
-    else:
-        ctx.send(sender, create_text_chat("🤖 RuhmDeFi: I can check yield, arbitrage, or summary."))
+agent.include(chat_proto, publish_manifest=True)
+
+if __name__ == "__main__":
+    agent.run()

@@ -18,14 +18,17 @@ server.register(cors, {
       'https://ruhmdefi-lbap.vercel.app',
       'https://ruhmdefi.onrender.com',
     ];
-    const allowedSuffixes = ['.vercel.app', '.netlify.app'];
+    const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app'];
     const normalized = origin ? origin.replace(/\/$/, '') : origin;
     const ok =
       !origin ||
       (normalized && allowedExact.includes(normalized)) ||
       (normalized && allowedSuffixes.some((suf) => normalized.endsWith(suf)));
     if (ok) cb(null, true);
-    else cb(new Error('Not allowed'), false);
+    else {
+      server.log.warn({ origin }, 'CORS blocked origin');
+      cb(new Error('Not allowed'), false);
+    }
   },
 });
 
