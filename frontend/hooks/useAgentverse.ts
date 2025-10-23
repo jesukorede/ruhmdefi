@@ -1,16 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { API_BASE } from '../lib/api';
-
-type Suggestion = {
-  trade_id: string;
-  token_pair: string;
-  strategy_summary: string;
-  confidence_score: number;
-  expected_apy?: number;
-  timestamp: number;
-};
+import { openEvents, apiArbitrage, type Suggestion } from '../lib/api';
 
 export function useAgentverse() {
   const [loading, setLoading] = useState(false);
@@ -19,20 +10,12 @@ export function useAgentverse() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const es = new EventSource(`${API_BASE}/events`);
-    const onArbitrage = (evt: MessageEvent) => {
-      try {
-        const data = JSON.parse(evt.data);
-        setSuggestions(data?.suggestions || []);
-      } catch {}
-    };
-    es.addEventListener('arbitrage', onArbitrage);
-    es.onopen = () => { setConnected(true); setError(null); };
-    es.onerror = () => { setConnected(false); setError('Realtime connection interrupted'); };
-    return () => {
-      es.removeEventListener('arbitrage', onArbitrage as any);
-      es.close();
-    };
+    const sub = openEvents({
+      onOpen: () => { setConnected(true); setError(null); },
+      onError: () => { setConnected(false); setError('Realtime connection interrupted'); },
+      onArbitrage: (data) => setSuggestions(data?.suggestions || []),
+    });
+    return () => { try { sub.close(); } catch {} };
   }, []);
 
   const runScan = useCallback(
@@ -40,9 +23,9 @@ export function useAgentverse() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${API_BASE}/${type}`, { cache: 'no-store' });
-        const data = await res.json();
-        setSuggestions(data?.suggestions || []);
+        // For now we only mock arbitrage; portfolio/yield could be wired similarly
+        const data = await apiArbitrage();
+        setSuggestions(data.suggestions || []);
       } catch (e: any) {
         setError(e?.message || 'Failed to scan');
       } finally {

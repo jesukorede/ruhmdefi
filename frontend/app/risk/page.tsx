@@ -1,10 +1,14 @@
-import { API_BASE } from '../../lib/api';
+import { API_BASE, IS_MOCK, mockSuggestions } from '../../lib/api';
 
 export default async function RiskPage() {
   let data: any = null;
   try {
-    const res = await fetch(`${API_BASE}/yield`, { cache: 'no-store' });
-    data = res.ok ? await res.json() : null;
+    if (IS_MOCK) {
+      data = { suggestions: mockSuggestions(), timestamp: Date.now() };
+    } else {
+      const res = await fetch(`${API_BASE}/yield`, { cache: 'no-store' });
+      data = res.ok ? await res.json() : null;
+    }
   } catch {}
   const suggestions = data?.suggestions || [];
 

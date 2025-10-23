@@ -6,6 +6,26 @@ function parsePair(token_pair: string) {
 }
 
 export default async function decisionRoutes(server: FastifyInstance) {
+  server.get('/decision', async () => {
+    const ts = Date.now();
+    const token_pair = 'SOL/USDC';
+    const { from, to } = parsePair(token_pair);
+    const plan = {
+      plan_id: `plan-${ts}-sample`,
+      trade_id: `sample-${ts}`,
+      status: 'proposed',
+      token_pair,
+      steps: [
+        { type: 'swap', via: 'jupiter', from, to, amount: 'auto', slippage_bps: 50 },
+        { type: 'stake', protocol: 'raydium', pool_hint: 'auto-select-top-apy', amount: 'auto' },
+      ],
+      risk: { slippage_pct: 0.5, volatility: 'medium', liquidity: 'adequate' },
+      estimate: { net_apy: 8.5, fees_pct: 0.02, confidence: 75 },
+      notes: 'Sample plan',
+      timestamp: ts,
+    };
+    return { plan };
+  });
   server.post('/decision', async (request) => {
     const body: any = request.body || {};
     const trade_id = body.trade_id || `unknown-${Date.now()}`;

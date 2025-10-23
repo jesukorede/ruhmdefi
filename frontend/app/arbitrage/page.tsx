@@ -2,7 +2,7 @@
 
 import { useAgentverse } from '../../hooks/useAgentverse';
 import { useState, useEffect } from 'react';
-import { API_BASE } from '../../lib/api';
+import { apiDecision, apiSimulate } from '../../lib/api';
 import Toast, { ToastMsg } from '../../components/Toast';
 import JsonModal from '../../components/JsonModal';
 
@@ -55,14 +55,8 @@ export default function ArbitragePage() {
 
   const approve = async (s: any) => {
     try {
-      const res = await fetch(`${API_BASE}/decision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(s),
-      });
-      if (!res.ok) throw new Error(`Approve failed (${res.status})`);
-      const data = await res.json();
-      setPlans((prev) => ({ ...prev, [s.trade_id]: data.plan || data }));
+      const data = await apiDecision(s);
+      setPlans((prev) => ({ ...prev, [s.trade_id]: data.plan }));
       pushToast({ type: 'success', text: 'Plan proposed' });
     } catch (e: any) {
       console.error(e);
@@ -77,14 +71,8 @@ export default function ArbitragePage() {
       const payload = plans[s.trade_id]
         ? { plan: plans[s.trade_id], amount: amt, slippage_bps: slip }
         : { ...s, amount: amt, slippage_bps: slip };
-      const res = await fetch(`${API_BASE}/simulate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`Simulate failed (${res.status})`);
-      const data = await res.json();
-      setSimResults((prev) => ({ ...prev, [s.trade_id]: data.simulation || data }));
+      const data = await apiSimulate(payload);
+      setSimResults((prev) => ({ ...prev, [s.trade_id]: data.simulation }));
       pushToast({ type: 'success', text: 'Simulation complete' });
     } catch (e: any) {
       console.error(e);

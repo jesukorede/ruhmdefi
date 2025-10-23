@@ -67,7 +67,7 @@ def assess_with_metta(token_pair: str) -> dict:
         return {"metta": False, "error": str(e), "risk": "unknown"}
 
 def fetch_backend_data(endpoint: str):
-    BASE_URL = os.getenv("AGENT_BACKEND_URL", "http://localhost:4000")
+    BASE_URL = os.getenv("AGENT_BACKEND_URL", "https://ruhmdefi-backend.fly.dev")
     try:
         response = requests.get(f"{BASE_URL}/{endpoint}", timeout=20)
         return response.json() if response.status_code == 200 else {"error": f"Backend returned {response.status_code}"}

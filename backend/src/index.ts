@@ -20,7 +20,7 @@ server.register(cors, {
       'https://ruhmdefi.onrender.com',
       'https://ruhmdefi-backend.fly.dev',
     ];
-    const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app', '.fly.dev'];
+    const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app', '.fly.dev', '.onrender.com'];
     const normalized = origin ? origin.replace(/\/$/, '') : origin;
     const ok =
       !origin ||
@@ -45,7 +45,7 @@ server.register(simulateRoutes, { prefix: "/" });
 
 (async () => {
   try {
-    const port = Number(process.env.PORT) || 8080;
+    const port = env.PORT;
     await server.listen({ port, host: "0.0.0.0" });
     server.log.info(`API listening on :${port}`);
   } catch (err) {

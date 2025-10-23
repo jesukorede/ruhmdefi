@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { getTopPools, getJupiterPrices } from '../services/defiData';
 import { buildStrategyFromData } from '../services/agentverse';
-import { prisma } from '../services/postgres';
 import { broadcast } from '../services/events';
 
 export default async function arbitrageRoutes(server: FastifyInstance) {

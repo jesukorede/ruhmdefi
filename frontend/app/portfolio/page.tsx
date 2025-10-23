@@ -1,10 +1,19 @@
-import { API_BASE } from '../../lib/api';
+import { API_BASE, IS_MOCK, mockSuggestions } from '../../lib/api';
 
 export default async function PortfolioPage() {
   let data: any = null;
   try {
-    const res = await fetch(`${API_BASE}/portfolio`, { cache: 'no-store' });
-    data = res.ok ? await res.json() : null;
+    if (IS_MOCK) {
+      const sug = mockSuggestions(4);
+      data = {
+        allocation: sug.map((s) => ({ asset: s.token_pair.split(/[\/-]/)[0], pct: Math.round(10 + Math.random() * 40) })),
+        summary: 'Mock portfolio allocation generated from heuristic suggestions.',
+        timestamp: Date.now(),
+      };
+    } else {
+      const res = await fetch(`${API_BASE}/portfolio`, { cache: 'no-store' });
+      data = res.ok ? await res.json() : null;
+    }
   } catch {}
   const allocation = data?.allocation || [];
   const summary = data?.summary || 'Portfolio recommendations are unavailable.';

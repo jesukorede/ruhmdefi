@@ -2,6 +2,7 @@
 
 import WalletConnect from './WalletConnect';
 import { Sun, Moon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type Props = {
   theme?: 'light' | 'dark';
@@ -9,10 +10,19 @@ type Props = {
 };
 
 export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
-  const deepLink =
-    typeof window !== 'undefined'
-      ? `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}`
-      : 'https://phantom.app/ul/browse/';
+  // Hydration-safe initial value; updated on client after mount
+  const [phantomHref, setPhantomHref] = useState('https://phantom.app/ul/browse/');
+
+  useEffect(() => {
+    try {
+      const url = typeof window !== 'undefined' ? window.location.href : '';
+      if (url) {
+        setPhantomHref(`https://phantom.app/ul/browse/${encodeURIComponent(url)}`);
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
 
   return (
     <header className="border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/75 sticky top-0 z-30">
@@ -26,7 +36,7 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <a
-            href={deepLink}
+            href={phantomHref}
             className="btn btn-ghost text-sm"
             title="Open this page in the Phantom app (mobile fallback)"
           >

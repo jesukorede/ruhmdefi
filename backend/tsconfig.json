@@ -6,6 +6,8 @@
     "moduleResolution": "NodeNext",
     "types": ["node"],
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "outDir": "dist"
   },
   "include": ["src/**/*.ts"]
