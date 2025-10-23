@@ -129,12 +129,15 @@ export function openEvents(handlers: {
     const onArb = (evt: MessageEvent) => {
       try { handlers.onArbitrage?.(JSON.parse(evt.data)); } catch {}
     };
+    const onPing = () => { try { handlers.onOpen?.(); } catch {} };
     es.addEventListener('arbitrage', onArb as any);
+    es.addEventListener('ping', onPing as any);
     es.onopen = () => handlers.onOpen?.();
     es.onerror = (e) => handlers.onError?.(e);
     return {
       close: () => {
         try { es.removeEventListener('arbitrage', onArb as any); } catch {}
+        try { es.removeEventListener('ping', onPing as any); } catch {}
         try { es.close(); } catch {}
       }
     };

@@ -34,6 +34,7 @@ server.register(cors, {
 });
 
 server.get("/health", async () => ({ ok: true }));
+server.get("/", async () => ({ ok: true, service: "ruhmdefi-backend" }));
 
 server.register(eventsRoutes, { prefix: "/" });
 server.register(arbitrageRoutes, { prefix: "/" });
