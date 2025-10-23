@@ -18,7 +18,6 @@ server.register(cors, {
       'http://localhost:3000',
       'https://ruhmdefi-lbap.vercel.app',
       'https://ruhmdefi.onrender.com',
-      'https://ruhmdefi-backend.fly.dev',
     ];
     const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app', '.fly.dev', '.onrender.com'];
     const normalized = origin ? origin.replace(/\/$/, '') : origin;
