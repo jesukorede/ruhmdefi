@@ -7,6 +7,8 @@ export default async function eventsRoutes(server: FastifyInstance) {
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
     reply.raw.setHeader('Access-Control-Allow-Origin', '*');
+    // Disable buffering on proxies like Nginx/Render
+    reply.raw.setHeader('X-Accel-Buffering', 'no');
     reply.raw.flushHeaders?.();
 
     reply.raw.write('retry: 2000\n\n'); // reconnection delay

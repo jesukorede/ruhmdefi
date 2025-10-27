@@ -3,6 +3,7 @@ import { ChatOpenAI } from '@langchain/openai';
 type Inputs = {
   pools: Array<{ pool: string; apy: number; symbol: string }>;
   prices: Record<string, any>;
+  dex?: string;
 };
 
 type Suggestion = {
@@ -44,7 +45,8 @@ export async function buildStrategyFromData(inputs: Inputs): Promise<Suggestion[
 Given pool APYs and prices, propose 3 yield/arbitrage suggestions in JSON:
 [{ "trade_id": "string", "token_pair": "string", "strategy_summary": "string", "confidence_score": 0-100, "expected_apy": float }]
 Pools: ${JSON.stringify(inputs.pools.slice(0, 10))}
-Prices: ${JSON.stringify(inputs.prices)}`;
+Prices: ${JSON.stringify(inputs.prices)}
+Prefer routes and opportunities on DEX: ${inputs.dex || 'any'} when applicable.`;
 
   const res = await llm.invoke([{ role: 'user', content: prompt }]);
   try {

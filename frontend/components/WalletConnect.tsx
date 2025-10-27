@@ -12,7 +12,7 @@ export default function WalletConnect() {
   return (
     <WalletMultiButtonDynamic
       aria-label="Select Wallet"
-      className="!bg-[#119611] !text-white !border-none hover:!brightness-110 !rounded !px-4 !py-2"
+      className="!bg-[#119611] !text-white !border-none hover:!brightness-110 !rounded !px-3 !py-1.5 !text-sm sm:!px-4 sm:!py-2 sm:!text-base"
     />
   );
 }

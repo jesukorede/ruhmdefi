@@ -1,4 +1,5 @@
 import { API_BASE, IS_MOCK, mockSuggestions } from '../../lib/api';
+import YieldStream from '../../components/YieldStream';
 
 export default async function YieldPage() {
   let data: any = null;
@@ -21,15 +22,13 @@ export default async function YieldPage() {
           {new Date(ts).toISOString()}
         </span>
       </div>
-      <ul className="space-y-2">
-        {suggestions.map((s: any) => (
-          <li key={s.trade_id} className="p-4 bg-white rounded shadow">
-            <div className="font-medium">{s.token_pair}</div>
-            <div className="text-sm text-gray-700">{s.strategy_summary}</div>
-            <div className="text-xs text-gray-500 mt-1">Expected APY: {Number(s.expected_apy).toFixed(2)}%</div>
-          </li>
-        ))}
-      </ul>
+      {suggestions.length === 0 ? (
+        <div className="rounded border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--muted)]">
+          No yield opportunities yet. Trigger a scan from Dashboard or wait for realtime updates.
+        </div>
+      ) : null}
+      {/* Realtime stream (hydrates on client) */}
+      <YieldStream initial={suggestions} />
     </div>
   );
 }

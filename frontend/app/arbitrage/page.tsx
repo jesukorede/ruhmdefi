@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { apiDecision, apiSimulate } from '../../lib/api';
 import Toast, { ToastMsg } from '../../components/Toast';
 import JsonModal from '../../components/JsonModal';
+ 
 
 export default function ArbitragePage() {
   const { loading, error, suggestions, runScan, connected } = useAgentverse();
@@ -21,7 +22,11 @@ export default function ArbitragePage() {
   const [maxRisk, setMaxRisk] = useState<string>('100');
   const [sortBy, setSortBy] = useState<'apy' | 'confidence' | 'risk'>('apy');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [dex, setDex] = useState<string>('Raydium');
 
+ 
+
+ 
   const computeApy = (s: any) => Number((s?.expected_apy ?? plans[s.trade_id]?.estimate?.net_apy ?? 0));
   const computeRiskScore = (s: any) => {
     const apy = computeApy(s);
@@ -282,23 +287,20 @@ export default function ArbitragePage() {
 
   return (
     <div className="space-y-4">
-      <Toast messages={toasts} onDismiss={dismissToast} />
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Arbitrage</h2>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs px-2 py-1 rounded ${connected ? 'bg-green-600/20 text-green-300 border border-green-600/40' : 'bg-red-600/20 text-red-300 border border-red-600/40'}`}>
-            {connected ? 'Scanning active' : 'Realtime connection interrupted'}
-          </span>
-          <button
-            onClick={() => runScan('arbitrage')}
-            className="rounded bg-[#119611] text-white px-4 py-2 hover:brightness-110"
-          >
-            Scan Arbitrage
-          </button>
-        </div>
-      </div>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 md:gap-3 text-sm text-[var(--muted)]">
+        <label className="flex items-center gap-2">
+          <span>DEX</span>
+          <select
+            className="border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
+            value={dex}
+            onChange={(e) => setDex(e.target.value)}
+          >
+            <option>Raydium</option>
+            <option>Orca</option>
+            <option>Jupiter</option>
+          </select>
+        </label>
         <label className="flex items-center gap-2">
           <span>Min APY (%)</span>
           <input
@@ -341,6 +343,12 @@ export default function ArbitragePage() {
             <option value="asc">Low to High</option>
           </select>
         </label>
+        <button
+          onClick={() => runScan('arbitrage', { dex })}
+          className="ml-auto rounded bg-[#119611] text-white px-4 py-2 hover:brightness-110"
+        >
+          Scan Arbitrage
+        </button>
       </div>
       {error && <div className="text-red-500">{error}</div>}
       {loading && <div className="text-gray-400">Scanning...</div>}
@@ -350,8 +358,8 @@ export default function ArbitragePage() {
       {jsonOpen && (
         <JsonModal
           open={true}
-          title={`JSON: ${jsonOpen.id}`}
-          data={jsonOpen.data}
+          title={`JSON: ${jsonOpen!.id}`}
+          data={jsonOpen!.data}
           onClose={() => setJsonOpen(null)}
           onCopy={() => pushToast({ type: 'info', text: 'Copied JSON' })}
         />

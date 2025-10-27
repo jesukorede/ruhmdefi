@@ -1,4 +1,5 @@
 import { API_BASE, IS_MOCK, mockSuggestions } from '../../lib/api';
+import PortfolioStream from '../../components/PortfolioStream';
 
 export default async function PortfolioPage() {
   let data: any = null;
@@ -27,13 +28,16 @@ export default async function PortfolioPage() {
           {new Date(ts).toISOString()}
         </span>
       </div>
-      <p className="text-gray-700">{summary}</p>
+      <p className="text-[var(--muted)]">{summary}</p>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-[var(--surface)] text-[var(--foreground)] rounded border border-[var(--border)] shadow-sm">
-          {/* ... existing code ... */}
-        </table>
-      </div>
+      {allocation.length === 0 ? (
+        <div className="rounded border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--muted)]">
+          No portfolio recommendations yet. Trigger a scan or wait for realtime updates.
+        </div>
+      ) : null}
+
+      {/* Realtime stream */}
+      <PortfolioStream initial={data} />
     </div>
   );
 }

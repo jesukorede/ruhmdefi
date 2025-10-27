@@ -1,4 +1,5 @@
 import { API_BASE, IS_MOCK, mockSuggestions } from '../../lib/api';
+import RiskStream from '../../components/RiskStream';
 
 export default async function RiskPage() {
   let data: any = null;
@@ -11,30 +12,24 @@ export default async function RiskPage() {
     }
   } catch {}
   const suggestions = data?.suggestions || [];
-
-  const score = (apy: number, conf: number) => {
-    const base = Math.min(100, Math.max(0, apy));
-    const adj = 100 - Math.min(100, Math.max(0, conf));
-    return Math.min(100, Math.round(base * 0.6 + adj * 0.4));
-  };
+  const ts = Number(data?.timestamp ?? Date.now());
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Risk Analytics</h2>
-      <p className="text-gray-600">Simple heuristic risk scores derived from yield suggestions.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {suggestions.map((s: any) => (
-          <div key={s.trade_id} className="p-4 bg-white rounded shadow">
-            <div className="font-medium">{s.token_pair}</div>
-            <div className="text-sm text-gray-700">{s.strategy_summary}</div>
-            <div className="mt-2 text-sm text-gray-600">APY: {Number(s.expected_apy).toFixed(2)}% • Confidence: {Number(s.confidence_score).toFixed(0)}%</div>
-            <div className="mt-1">
-              <span className="text-xs font-semibold">Risk Score: </span>
-              <span className="text-xs">{score(Number(s.expected_apy), Number(s.confidence_score))}/100</span>
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Risk Analytics</h2>
+        <span className="text-xs text-gray-500" suppressHydrationWarning>
+          {new Date(ts).toISOString()}
+        </span>
       </div>
+      <p className="text-[var(--muted)]">Simple heuristic risk scores derived from yield suggestions.</p>
+      {suggestions.length === 0 ? (
+        <div className="rounded border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--muted)]">
+          No risk analytics yet. Trigger a scan from Dashboard or wait for realtime updates.
+        </div>
+      ) : null}
+      {/* Realtime stream */}
+      <RiskStream initial={suggestions} />
     </div>
   );
 }

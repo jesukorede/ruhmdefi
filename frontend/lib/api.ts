@@ -71,10 +71,11 @@ export function mockSimulate(payload: any) {
 }
 
 // ---------- API wrappers with graceful fallback ----------
-export async function apiArbitrage(): Promise<ArbitrageEvent> {
+export async function apiArbitrage(dex?: string): Promise<ArbitrageEvent> {
   if (IS_MOCK) return { suggestions: mockSuggestions() };
   try {
-    const res = await fetch(`${API_BASE}/arbitrage`, { cache: 'no-store' });
+    const qs = dex ? `?dex=${encodeURIComponent(dex)}` : '';
+    const res = await fetch(`${API_BASE}/arbitrage${qs}`, { cache: 'no-store' });
     if (!res.ok) return { suggestions: mockSuggestions() };
     const data = await res.json();
     return { suggestions: data?.suggestions ?? [] };
@@ -117,6 +118,8 @@ export function openEvents(handlers: {
   onOpen?: () => void;
   onError?: (err?: any) => void;
   onArbitrage?: (data: ArbitrageEvent) => void;
+  onYield?: (data: { suggestions: Suggestion[]; timestamp?: number }) => void;
+  onPortfolio?: (data: { allocation: any[]; summary: string; timestamp: number }) => void;
 }) {
   if (IS_MOCK || typeof window === 'undefined') {
     const id = setInterval(() => handlers.onArbitrage?.({ suggestions: mockSuggestions() }), 5000);
@@ -129,14 +132,24 @@ export function openEvents(handlers: {
     const onArb = (evt: MessageEvent) => {
       try { handlers.onArbitrage?.(JSON.parse(evt.data)); } catch {}
     };
+    const onYield = (evt: MessageEvent) => {
+      try { handlers.onYield?.(JSON.parse(evt.data)); } catch {}
+    };
+    const onPortfolio = (evt: MessageEvent) => {
+      try { handlers.onPortfolio?.(JSON.parse(evt.data)); } catch {}
+    };
     const onPing = () => { try { handlers.onOpen?.(); } catch {} };
     es.addEventListener('arbitrage', onArb as any);
+    es.addEventListener('yield', onYield as any);
+    es.addEventListener('portfolio', onPortfolio as any);
     es.addEventListener('ping', onPing as any);
     es.onopen = () => handlers.onOpen?.();
     es.onerror = (e) => handlers.onError?.(e);
     return {
       close: () => {
         try { es.removeEventListener('arbitrage', onArb as any); } catch {}
+        try { es.removeEventListener('yield', onYield as any); } catch {}
+        try { es.removeEventListener('portfolio', onPortfolio as any); } catch {}
         try { es.removeEventListener('ping', onPing as any); } catch {}
         try { es.close(); } catch {}
       }

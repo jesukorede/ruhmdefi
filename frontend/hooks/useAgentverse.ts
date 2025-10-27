@@ -19,12 +19,12 @@ export function useAgentverse() {
   }, []);
 
   const runScan = useCallback(
-    async (type: 'arbitrage' | 'portfolio' | 'yield' = 'arbitrage') => {
+    async (type: 'arbitrage' | 'portfolio' | 'yield' = 'arbitrage', opts?: { dex?: string }) => {
       try {
         setLoading(true);
         setError(null);
         // For now we only mock arbitrage; portfolio/yield could be wired similarly
-        const data = await apiArbitrage();
+        const data = await apiArbitrage(opts?.dex);
         setSuggestions(data.suggestions || []);
       } catch (e: any) {
         setError(e?.message || 'Failed to scan');

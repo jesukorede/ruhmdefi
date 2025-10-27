@@ -12,19 +12,25 @@ const env = getEnv();
 const server = Fastify({ logger: true });
 
 server.register(cors, {
-  // keep your existing CORS config; ensure Fly/Vercel allowed
   origin: (origin, cb) => {
     const allowedExact = [
       'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
       'https://ruhmdefi-lbap.vercel.app',
       'https://ruhmdefi.onrender.com',
+      'https://ruhmdefi-backend.fly.dev',
     ];
     const allowedSuffixes = ['.vercel.app', '.railway.app', '.netlify.app', '.fly.dev', '.onrender.com'];
     const normalized = origin ? origin.replace(/\/$/, '') : origin;
+    const localhostOk = normalized ? /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalized) : false;
     const ok =
       !origin ||
       (normalized && allowedExact.includes(normalized)) ||
-      (normalized && allowedSuffixes.some((suf) => normalized.endsWith(suf)));
+      (normalized && allowedSuffixes.some((suf) => normalized.endsWith(suf))) ||
+      localhostOk;
+
     if (ok) cb(null, true);
     else {
       server.log.warn({ origin }, 'CORS blocked origin');
