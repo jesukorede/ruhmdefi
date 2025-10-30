@@ -23,6 +23,13 @@ export default function ArbitragePage() {
   const [sortBy, setSortBy] = useState<'apy' | 'confidence' | 'risk'>('apy');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [dex, setDex] = useState<string>('Raydium');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('arb_selected_dex');
+      if (saved) setDex(saved);
+    } catch {}
+  }, []);
+  useEffect(() => { try { localStorage.setItem('arb_selected_dex', dex); } catch {} }, [dex]);
 
  
 
@@ -199,17 +206,17 @@ export default function ArbitragePage() {
     const risk = computeRiskScore(s);
     return (
       <li key={s.trade_id} className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="min-w-0">
             <div className="font-medium">{s.token_pair}</div>
             <div className="text-sm text-gray-300">{s.strategy_summary}</div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               <span title={`Expected APY: ${apy.toFixed(2)}%`} className={`text-xs px-2 py-0.5 rounded ${apyBadgeClass(apy)}`}>APY {apy.toFixed(2)}%</span>
               <span title={`Risk: ${riskLevel(risk)} (score ${risk.toFixed(0)}/100). Derived from confidence and APY.`} className={`text-xs px-2 py-0.5 rounded ${riskBadgeClass(risk)}`}>Risk {riskLevel(risk)}</span>
               <span title={`Confidence: ${confPct.toFixed(0)}%`} className="text-xs px-2 py-0.5 rounded bg-[#2a2a2a] text-gray-300 border border-[#3a3a3a]">Conf {confPct.toFixed(0)}%</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => approve(s)}
               className="rounded bg-[#119611] text-white px-3 py-1 hover:brightness-110"
@@ -225,7 +232,7 @@ export default function ArbitragePage() {
                 setAmounts((prev) => ({ ...prev, [s.trade_id]: val }));
                 try { localStorage.setItem(`arb_amt_${s.trade_id}`, String(val)); } catch {}
               }}
-              className="w-24 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-sm text-[var(--foreground)] placeholder-gray-500 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-24 sm:w-28 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-sm text-[var(--foreground)] placeholder-gray-500 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
               aria-label="Amount"
             />
             <input
@@ -237,7 +244,7 @@ export default function ArbitragePage() {
                 setSlippages((prev) => ({ ...prev, [s.trade_id]: val }));
                 try { localStorage.setItem(`arb_slip_${s.trade_id}`, String(val)); } catch {}
               }}
-              className="w-20 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-sm text-[var(--foreground)] placeholder-gray-500 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-20 sm:w-24 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-sm text-[var(--foreground)] placeholder-gray-500 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
               aria-label="Slippage bps"
             />
             <button
@@ -344,10 +351,11 @@ export default function ArbitragePage() {
           </select>
         </label>
         <button
+          disabled={loading}
           onClick={() => runScan('arbitrage', { dex })}
-          className="ml-auto rounded bg-[#119611] text-white px-4 py-2 hover:brightness-110"
+          className={`ml-auto rounded px-4 py-2 ${loading ? 'bg-[#0b6f0b] cursor-not-allowed opacity-70' : 'bg-[#119611] hover:brightness-110'} text-white`}
         >
-          Scan Arbitrage
+          {loading ? 'Scanning…' : 'Scan Arbitrage'}
         </button>
       </div>
       {error && <div className="text-red-500">{error}</div>}

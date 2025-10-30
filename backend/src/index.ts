@@ -7,6 +7,7 @@ import portfolioRoutes from './routes/portfolio';
 import decisionRoutes from './routes/decision';
 import simulateRoutes from './routes/simulate';
 import eventsRoutes from './routes/events';
+import { getStatus } from './services/events';
 
 const env = getEnv();
 const server = Fastify({ logger: true });
@@ -41,6 +42,7 @@ server.register(cors, {
 
 server.get("/health", async () => ({ ok: true }));
 server.get("/", async () => ({ ok: true, service: "ruhmdefi-backend" }));
+server.get('/status', async () => getStatus());
 
 server.register(eventsRoutes, { prefix: "/" });
 server.register(arbitrageRoutes, { prefix: "/" });

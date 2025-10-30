@@ -127,36 +127,49 @@ export function openEvents(handlers: {
     setTimeout(() => handlers.onOpen?.(), 0);
     return { close: () => clearInterval(id) };
   }
-  try {
-    const es = new EventSource(`${API_BASE}/events`);
-    const onArb = (evt: MessageEvent) => {
-      try { handlers.onArbitrage?.(JSON.parse(evt.data)); } catch {}
-    };
-    const onYield = (evt: MessageEvent) => {
-      try { handlers.onYield?.(JSON.parse(evt.data)); } catch {}
-    };
-    const onPortfolio = (evt: MessageEvent) => {
-      try { handlers.onPortfolio?.(JSON.parse(evt.data)); } catch {}
-    };
-    const onPing = () => { try { handlers.onOpen?.(); } catch {} };
-    es.addEventListener('arbitrage', onArb as any);
-    es.addEventListener('yield', onYield as any);
-    es.addEventListener('portfolio', onPortfolio as any);
-    es.addEventListener('ping', onPing as any);
-    es.onopen = () => handlers.onOpen?.();
-    es.onerror = (e) => handlers.onError?.(e);
-    return {
-      close: () => {
-        try { es.removeEventListener('arbitrage', onArb as any); } catch {}
-        try { es.removeEventListener('yield', onYield as any); } catch {}
-        try { es.removeEventListener('portfolio', onPortfolio as any); } catch {}
-        try { es.removeEventListener('ping', onPing as any); } catch {}
-        try { es.close(); } catch {}
-      }
-    };
-  } catch (e) {
-    handlers.onError?.(e);
-    const id = setInterval(() => handlers.onArbitrage?.({ suggestions: mockSuggestions() }), 5000);
-    return { close: () => clearInterval(id) };
-  }
+  let es: EventSource | null = null;
+  let closed = false;
+  let retry = 0;
+
+  const attach = () => {
+    if (closed) return;
+    try {
+      es = new EventSource(`${API_BASE}/events`);
+      const onArb = (evt: MessageEvent) => {
+        try { handlers.onArbitrage?.(JSON.parse(evt.data)); } catch {}
+      };
+      const onYield = (evt: MessageEvent) => {
+        try { handlers.onYield?.(JSON.parse(evt.data)); } catch {}
+      };
+      const onPortfolio = (evt: MessageEvent) => {
+        try { handlers.onPortfolio?.(JSON.parse(evt.data)); } catch {}
+      };
+      const onPing = () => { try { handlers.onOpen?.(); } catch {} };
+      es.addEventListener('arbitrage', onArb as any);
+      es.addEventListener('yield', onYield as any);
+      es.addEventListener('portfolio', onPortfolio as any);
+      es.addEventListener('ping', onPing as any);
+      es.onopen = () => { retry = 0; handlers.onOpen?.(); };
+      es.onerror = (e) => {
+        handlers.onError?.(e);
+        try { es?.removeEventListener('arbitrage', onArb as any); } catch {}
+        try { es?.removeEventListener('yield', onYield as any); } catch {}
+        try { es?.removeEventListener('portfolio', onPortfolio as any); } catch {}
+        try { es?.removeEventListener('ping', onPing as any); } catch {}
+        try { es?.close(); } catch {}
+        es = null;
+        if (!closed) {
+          const delay = Math.min(30000, 1000 * Math.pow(2, retry++));
+          setTimeout(attach, delay);
+        }
+      };
+    } catch (e) {
+      handlers.onError?.(e);
+      const delay = Math.min(30000, 1000 * Math.pow(2, ++retry));
+      setTimeout(attach, delay);
+    }
+  };
+
+  attach();
+  return { close: () => { closed = true; try { es?.close(); } catch {} } };
 }

@@ -41,7 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <Sidebar />
                   <div className="flex-1">
                     <Navbar theme={theme} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
-                    <main className="p-6">{children}</main>
+                    {/* Responsive container applied to all pages */}
+                    <main className="px-4 md:px-6 py-6 max-w-6xl mx-auto">{children}</main>
                   </div>
                 </div>
               </WalletModalProvider>
