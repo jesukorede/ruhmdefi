@@ -1,19 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { DexSelector } from '../../components/DexSelector';
+import { apiSimulate, apiDecision } from '../../lib/api';
 
 export default function TraderPage() {
   type Dex = 'jupiter' | 'raydium' | 'orca' | 'openbook' | 'phoenix';
   const [dex, setDex] = useState<Dex>('jupiter');
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://ruhmdefi.onrender.com';
-
   const simulate = async (payload: any) => {
-    const res = await fetch(`${apiBase}/simulate?dex=${dex}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const data = await apiSimulate({ ...payload, dex });
     // handle response
   };
 

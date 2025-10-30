@@ -12,7 +12,7 @@ export function useAgentverse() {
   useEffect(() => {
     const sub = openEvents({
       onOpen: () => { setConnected(true); setError(null); },
-      onError: () => { setConnected(false); setError('Realtime connection interrupted'); },
+      onError: () => { setConnected(false); /* do not surface SSE status as error */ },
       onArbitrage: (data) => setSuggestions(data?.suggestions || []),
     });
     return () => { try { sub.close(); } catch {} };

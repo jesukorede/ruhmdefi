@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { apiDecision, apiSimulate } from '../../lib/api';
 import Toast, { ToastMsg } from '../../components/Toast';
 import JsonModal from '../../components/JsonModal';
+import { DexSelector } from '../../components/DexSelector';
  
 
 export default function ArbitragePage() {
@@ -22,11 +23,12 @@ export default function ArbitragePage() {
   const [maxRisk, setMaxRisk] = useState<string>('100');
   const [sortBy, setSortBy] = useState<'apy' | 'confidence' | 'risk'>('apy');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [dex, setDex] = useState<string>('Raydium');
+  const [dex, setDex] = useState<'jupiter' | 'raydium' | 'orca' | 'openbook' | 'phoenix'>('jupiter');
   useEffect(() => {
     try {
       const saved = localStorage.getItem('arb_selected_dex');
-      if (saved) setDex(saved);
+      const allowed = new Set(['jupiter', 'raydium', 'orca', 'openbook', 'phoenix']);
+      if (saved && allowed.has(saved as any)) setDex(saved as any);
     } catch {}
   }, []);
   useEffect(() => { try { localStorage.setItem('arb_selected_dex', dex); } catch {} }, [dex]);
@@ -296,82 +298,24 @@ export default function ArbitragePage() {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 md:gap-3 text-sm text-[var(--muted)]">
-        <label className="flex items-center gap-2">
-          <span>DEX</span>
-          <select
-            className="border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
-            value={dex}
-            onChange={(e) => setDex(e.target.value)}
-          >
-            <option>Raydium</option>
-            <option>Orca</option>
-            <option>Jupiter</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <span>Min APY (%)</span>
-          <input
-            type="number"
-            className="w-20 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
-            value={minApy}
-            onChange={(e) => setMinApy(e.target.value)}
+        <DexSelector value={dex} onChange={setDex} compact />
+        {error && error !== 'Realtime connection interrupted' && (
+          <div className="text-red-500">{error}</div>
+        )}
+        {loading && <div className="text-gray-400">Scanning...</div>}
+        <ul className="space-y-2">
+          {sortedSuggestions.map(renderSuggestion)}
+        </ul>
+        {jsonOpen && (
+          <JsonModal
+            open={true}
+            title={`JSON: ${jsonOpen!.id}`}
+            data={jsonOpen!.data}
+            onClose={() => setJsonOpen(null)}
+            onCopy={() => pushToast({ type: 'info', text: 'Copied JSON' })}
           />
-        </label>
-        <label className="flex items-center gap-2">
-          <span>Min Confidence (%)</span>
-          <input
-            type="number"
-            className="w-24 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
-            value={minConf}
-            onChange={(e) => setMinConf(e.target.value)}
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <span>Max Risk</span>
-          <input
-            type="number"
-            className="w-20 border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
-            value={maxRisk}
-            onChange={(e) => setMaxRisk(e.target.value)}
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <span>Sort by</span>
-          <select className="border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
-            <option value="apy">APY</option>
-            <option value="confidence">Confidence</option>
-            <option value="risk">Risk</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <span>Direction</span>
-          <select className="border border-[var(--border)] bg-[var(--surface)] rounded px-2 py-1 text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]" value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}>
-            <option value="desc">High to Low</option>
-            <option value="asc">Low to High</option>
-          </select>
-        </label>
-        <button
-          disabled={loading}
-          onClick={() => runScan('arbitrage', { dex })}
-          className={`ml-auto rounded px-4 py-2 ${loading ? 'bg-[#0b6f0b] cursor-not-allowed opacity-70' : 'bg-[#119611] hover:brightness-110'} text-white`}
-        >
-          {loading ? 'Scanning…' : 'Scan Arbitrage'}
-        </button>
+        )}
       </div>
-      {error && <div className="text-red-500">{error}</div>}
-      {loading && <div className="text-gray-400">Scanning...</div>}
-      <ul className="space-y-2">
-        {sortedSuggestions.map(renderSuggestion)}
-      </ul>
-      {jsonOpen && (
-        <JsonModal
-          open={true}
-          title={`JSON: ${jsonOpen!.id}`}
-          data={jsonOpen!.data}
-          onClose={() => setJsonOpen(null)}
-          onCopy={() => pushToast({ type: 'info', text: 'Copied JSON' })}
-        />
-      )}
     </div>
   );
 }
