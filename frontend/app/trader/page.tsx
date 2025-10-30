@@ -1,6 +1,11 @@
+'use client';
+import { useState } from 'react';
+import { DexSelector } from '../../components/DexSelector';
+
 export default function TraderPage() {
-  // ... existing code ...
-  const [dex, setDex] = useState<'jupiter' | 'raydium' | 'orca' | 'openbook' | 'phoenix'>('jupiter');
+  type Dex = 'jupiter' | 'raydium' | 'orca' | 'openbook' | 'phoenix';
+  const [dex, setDex] = useState<Dex>('jupiter');
+
   const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://ruhmdefi.onrender.com';
 
   const simulate = async (payload: any) => {
