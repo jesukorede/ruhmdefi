@@ -1,23 +1,26 @@
-'use client';
-import './globals.css';
-import { useEffect, useState } from 'react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import { Web3Provider } from '../src/lib/web3/Web3Provider';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
+"use client";
+import "./globals.css";
+import { useEffect, useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Web3Provider } from "../lib/web3/Web3Provider";
+import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark'>(
-    () => (typeof window !== 'undefined' 
-      ? (localStorage.getItem('theme') as 'light' | 'dark') || 'dark' 
-      : 'dark'
-    )
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    typeof window !== "undefined"
+      ? (localStorage.getItem("theme") as "light" | "dark") || "dark"
+      : "dark",
   );
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
     }
   }, [theme]);
 
@@ -28,9 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="min-h-screen flex bg-[var(--background)] text-[var(--foreground)]">
             <Sidebar />
             <div className="flex-1">
-              <Navbar 
-                theme={theme} 
-                onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+              <Navbar
+                theme={theme}
+                onToggleTheme={() =>
+                  setTheme(theme === "dark" ? "light" : "dark")
+                }
               />
               <main className="px-4 md:px-6 py-6 max-w-6xl mx-auto">
                 {children}
@@ -39,8 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </Web3Provider>
         <SpeedInsights />
-          <SpeedInsights />
-        </body>
-      </html>
-    );
+        <SpeedInsights />
+      </body>
+    </html>
+  );
 }

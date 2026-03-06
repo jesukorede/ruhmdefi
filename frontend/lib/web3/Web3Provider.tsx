@@ -5,46 +5,26 @@ import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@sol
 import { WalletModalProvider as SolanaModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
-import { configureChains, createConfig, WagmiConfig } from 'wagmi';
-import { publicProvider } from 'wagmi/providers/public';
-import { InjectedConnector } from 'wagmi/connectors/injected';
-import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
-import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
-import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from './networks';
-
-// Configure chains for Wagmi
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  SUPPORTED_CHAINS,
-  [publicProvider()],
-);
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors';
+import { DEFAULT_CHAIN, SUPPORTED_CHAINS, BASE_MAINNET, BASE_TESTNET } from './networks';
 
 // Create Wagmi config
 const config = createConfig({
-  autoConnect: true,
+  chains: SUPPORTED_CHAINS,
   connectors: [
-    new InjectedConnector({
-      chains,
-      options: {
-        name: 'Injected',
-        shimDisconnect: true,
-      },
+    injected(),
+    walletConnect({
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
     }),
-    new WalletConnectConnector({
-      chains,
-      options: {
-        projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
-        showQrModal: true,
-      },
-    }),
-    new CoinbaseWalletConnector({
-      chains,
-      options: {
-        appName: 'RuhmDeFi',
-      },
+    coinbaseWallet({
+      appName: 'RuhmDeFi',
     }),
   ],
-  publicClient,
-  webSocketPublicClient,
+  transports: {
+    [BASE_MAINNET.id]: http(),
+    [BASE_TESTNET.id]: http(),
+  },
 });
 
 interface Web3ContextType {
@@ -116,7 +96,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <WagmiConfig config={config}>
+    <WagmiProvider config={config}>
       <ConnectionProvider endpoint={solanaEndpoint}>
         <SolanaWalletProvider wallets={solanaWallets} autoConnect={false}>
           <SolanaModalProvider>
@@ -126,7 +106,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
           </SolanaModalProvider>
         </SolanaWalletProvider>
       </ConnectionProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   );
 }
 
