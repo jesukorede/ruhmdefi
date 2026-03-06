@@ -1,10 +1,15 @@
 'use client';
 
-import WalletConnect from './WalletConnect';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Menu, X, ArrowLeft } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { API_BASE } from '../lib/api';
+import { API_BASE } from '@/lib/api';
+import dynamic from 'next/dynamic';
+
+const WalletConnector = dynamic(
+  () => import('@/components/wallet/WalletConnector'),
+  { ssr: false }
+);
 
 type Props = {
   theme?: 'light' | 'dark';
@@ -12,7 +17,6 @@ type Props = {
 };
 
 export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
-  // Hydration-safe initial value; updated on client after mount
   const [phantomHref, setPhantomHref] = useState('https://phantom.app/ul/browse/');
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerIn, setDrawerIn] = useState(false);
@@ -22,10 +26,8 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
   const isDev = useMemo(() => process.env.NODE_ENV !== 'production', []);
   const agentAddress = useMemo(() => (process.env.NEXT_PUBLIC_AGENT_ADDRESS || '').trim(), []);
   const truncatedAgent = useMemo(() => {
-    const a = agentAddress;
-    if (!a) return '';
-    if (a.length <= 12) return a;
-    return `${a.slice(0, 7)}…${a.slice(-6)}`;
+    if (!agentAddress) return '';
+    return agentAddress.length <= 12 ? agentAddress : `${agentAddress.slice(0, 7)}…${agentAddress.slice(-6)}`;
   }, [agentAddress]);
 
   useEffect(() => {
@@ -34,11 +36,9 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
       if (url) {
         setPhantomHref(`https://phantom.app/ul/browse/${encodeURIComponent(url)}`);
       }
-    } catch {
-      // no-op
-    }
+    } catch {}
   }, []);
-  // Lock body scroll when mobile menu is open
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const cls = 'overflow-hidden';
@@ -70,7 +70,7 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
     if (!menuOpen) return;
     const drawer = drawerRef.current;
     if (!drawer) return;
-    // Focus first focusable element
+    
     const focusables = drawer.querySelectorAll<HTMLElement>(
       'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
@@ -84,7 +84,6 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
         setDrawerIn(false);
         setTimeout(() => setMenuOpen(false), 300);
       } else if (e.key === 'Tab' && focusables.length) {
-        // Trap focus within drawer
         if (e.shiftKey && document.activeElement === first) {
           e.preventDefault();
           (last || first).focus();
@@ -99,14 +98,12 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
-  // Restore focus to opener when menu fully closes
   useEffect(() => {
     if (!menuOpen && openerRef.current) {
       try { openerRef.current.focus(); } catch {}
     }
   }, [menuOpen]);
 
-  // Close drawer if viewport grows to md+
   useEffect(() => {
     const onResize = () => {
       if (typeof window !== 'undefined' && window.innerWidth >= 768 && menuOpen) {
@@ -122,7 +119,6 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
     <header className="border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/75 sticky top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Mobile: back + menu */}
           <div className="flex md:hidden items-center gap-2 mr-1">
             <button
               onClick={() => { try { history.back(); } catch {} }}
@@ -130,7 +126,7 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
               aria-label="Go back"
               title="Back"
             >
-              ←
+              <ArrowLeft className="w-4 h-4" />
             </button>
             <button
               ref={openerRef}
@@ -141,7 +137,7 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
               aria-controls="mobile-menu-drawer"
               aria-expanded={menuOpen}
             >
-              ☰
+              <Menu className="w-5 h-5" />
             </button>
           </div>
           <img src="/logo.svg" alt="RuhmDeFi" className="h-6 w-6" />
@@ -149,8 +145,8 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
             <span className="font-semibold">RuhmDeFi</span>
           </div>
         </div>
+        
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          {/* Agent address pill (hidden if not set) */}
           {agentAddress && (
             <button
               onClick={async () => { try { await navigator.clipboard.writeText(agentAddress); } catch {} }}
@@ -161,25 +157,21 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
               <span className="font-mono">{truncatedAgent}</span>
             </button>
           )}
-          {/* Dev-only status chip */}
+          
           {isDev && (
             <span className="hidden md:inline-flex items-center text-xs px-2 py-1 rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]" title="SSE clients connected">
               SSE {sseClients ?? '-'}
             </span>
           )}
-          {/* Combined Wallet + Phantom group (sm+) */}
-          <div className="hidden sm:flex items-stretch rounded overflow-hidden border border-[var(--border)]">
-            <WalletConnect />
-            <a
-              href={phantomHref}
-              className="inline-flex items-center px-3 text-sm bg-[var(--surface)] hover:bg-[#1f1f1f] whitespace-nowrap"
-              title="Open this page in the Phantom app"
-            >
-              Open in Phantom
-            </a>
+          
+          <div className="hidden sm:flex items-center">
+            <WalletConnector />
           </div>
-          {/* On xs screens, keep only wallet button for space */}
-          <div className="sm:hidden"><WalletConnect /></div>
+          
+          <div className="sm:hidden">
+            <WalletConnector />
+          </div>
+          
           <button
             aria-label="Toggle theme"
             onClick={onToggleTheme}
@@ -191,7 +183,6 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
         </div>
       </div>
 
-      {/* Mobile overlay menu */}
       {menuOpen && (
         <div className="md:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
           <div
@@ -210,14 +201,42 @@ export default function Navbar({ theme = 'dark', onToggleTheme }: Props) {
           >
             <div className="flex items-center justify-between mb-4">
               <div id="mobile-menu-title" className="font-semibold">Menu</div>
-              <button className="btn btn-ghost" onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }} aria-label="Close menu">✕</button>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }} 
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="space-y-2">
-              <Link href="/" className="block px-3 py-2 rounded text-[var(--foreground)] hover:bg-[#1f1f1f]" onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }}>Home</Link>
-              <Link href="/dashboard" className="block px-3 py-2 rounded text-[var(--foreground)] hover:bg-[#1f1f1f]" onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }}>Dashboard</Link>
-              <Link href="/portfolio" className="block px-3 py-2 rounded text-[var(--foreground)] hover:bg-[#1f1f1f]" onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }}>Portfolio Optimizer</Link>
-              <Link href="/arbitrage" className="block px-3 py-2 rounded text-[var(--foreground)] hover:bg-[#1f1f1f]" onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }}>Arbitrage Trader</Link>
-              <Link href="/risk" className="block px-3 py-2 rounded text-[var(--foreground)] hover:bg-[#1f1f1f]" onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }}>Risk Assessment</Link>
+            
+            <div className="space-y-2 mb-4">
+              {['/', '/dashboard', '/portfolio', '/arbitrage', '/risk'].map((path) => (
+                <Link 
+                  key={path}
+                  href={path}
+                  className="block px-3 py-2 rounded text-[var(--foreground)] hover:bg-[#1f1f1f]"
+                  onClick={() => { setDrawerIn(false); setTimeout(() => setMenuOpen(false), 300); }}
+                >
+                  {path === '/' ? 'Home' : path.slice(1).replace(/-/g, ' ')}
+                </Link>
+              ))}
+            </div>
+            
+            <div className="pt-4 border-t border-[var(--border)]">
+              <div className="flex justify-between items-center px-3 py-2">
+                <span className="text-sm font-medium text-[var(--muted)]">Theme</span>
+                <button
+                  onClick={onToggleTheme}
+                  className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] rounded-full hover:bg-[#1f1f1f]"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              </div>
+              <div className="px-3 py-2">
+                <WalletConnector />
+              </div>
             </div>
           </nav>
         </div>
